@@ -1,4 +1,4 @@
-module ListProperties where
+module CFramework.Misc.ListProperties where
 
 open import Function
 open import Data.Empty
@@ -106,8 +106,3 @@ lemmaΓ++Δ,x⊆Γ,x++Δ {Γ} {Δ} {x} {y} y∈Γ++x∷Δ with c∈xs++ys→c∈
 ... | inj₁ y∈Γ          = c∈xs∨c∈ys→c∈xs++ys (inj₁ (there y∈Γ))
 ... | inj₂ (here y≡x)   = here y≡x
 ... | inj₂ (there y∈Δ)  = c∈xs∨c∈ys→c∈xs++ys {y} {x ∷ Γ} (inj₂ y∈Δ)
-
-data First {A : Set}
-         (P : A → Set) : List A → Set where
-  here  : ∀ {x xs} (px  : P x)                        → First P (x ∷ xs)
-  there : ∀ {x xs} (¬px : ¬ (P x))(pxs : First P xs)  → First P (x ∷ xs)

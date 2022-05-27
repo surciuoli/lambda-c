@@ -1,8 +1,8 @@
-module CFramework.CSubstitution where
+module CFramework.CSubstitution (C : Set) where
 
-open import Chi
-open import CFramework.CTerm -- renaming (_⊆_ to _⊆c_ ; _∈_ to _∈c_)
-open import ListProperties
+open import CFramework.CChi
+open import CFramework.CTerm C
+open import CFramework.Misc.ListProperties
 
 open import Function renaming (_∘_ to _∘f_)
 open import Function.Inverse hiding (sym;_∘_;map;id)
@@ -28,6 +28,7 @@ open DecTotalOrder Nat.decTotalOrder using () renaming (refl to ≤-refl)
 infixl 8 _≺+_
 infix  5 _∙_ 
 
+Σ : Set
 Σ = V → Λ
 
 ι : Σ 

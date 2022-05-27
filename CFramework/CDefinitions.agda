@@ -1,17 +1,18 @@
-module CFramework.CDefinitions where
+module CFramework.CDefinitions (C : Set) where
 
-open import Relation.Binary.Core
+open import Data.Product
+open import Relation.Nullary
 
-open import CFramework.CTerm
-open import CFramework.CSubstitution
-open import CFramework.CSubstitutionLemmas
-open import CFramework.CAlpha
+open import CFramework.CTerm C
+open import CFramework.CSubstitution C
+open import CFramework.CSubstitutionLemmas C
+open import CFramework.CAlpha C
 
-Preserves* : ∀ {ℓ} → Rel Λ ℓ → Set ℓ
+Preserves* : Rel → Set
 Preserves* r = ∀ {x M N} → x * N → r M N → x * M
 
-Compat∙ : ∀ {ℓ} → Rel Λ ℓ → Set ℓ
+Compat∙ : Rel → Set
 Compat∙ r = ∀ {M N σ} → r M N → Σ[ P ∈ Λ ](r (M ∙ σ) P × P ∼α N ∙ σ)
 
-Comm∼α : ∀ {ℓ} → Rel Λ ℓ → Set ℓ
+Comm∼α : Rel → Set
 Comm∼α R = ∀ {M N P} → M ∼α N → R N P → Σ[ Q ∈ Λ ](R M Q × Q ∼α P)

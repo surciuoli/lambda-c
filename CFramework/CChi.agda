@@ -1,4 +1,4 @@
-module Chi where
+module CFramework.CChi where
 
 open import Data.Nat as Nat
 open import Data.Nat.Properties

@@ -1,11 +1,11 @@
-module CFramework.CSubstitutionLemmas where
+module CFramework.CSubstitutionLemmas (C : Set) where
 
-open import Chi
-open import CFramework.CTerm
-open import CFramework.CSubstitution
-open import CFramework.CAlpha
-open import NaturalProp
-open import ListProperties
+open import CFramework.CChi
+open import CFramework.CTerm C
+open import CFramework.CSubstitution C
+open import CFramework.CAlpha C
+open import CFramework.Misc.NaturalProp
+open import CFramework.Misc.ListProperties
 
 open import Data.Empty
 open import Data.Nat hiding (_*_)
@@ -293,7 +293,7 @@ lemma-subst {M} {M'} {σ} {σ'} M∼M' σ∼σ'⇂M
        M' ∙ σ'
      ∎
 
-lemma∙ι : {M : Λ} → M ∼α M ∙ ι
+lemma∙ι : ∀ {M} → M ∼α M ∙ ι
 lemma∙ι {M} =  lemmaMι≡M'ι→M∼M' ( begin≡
                                     M ∙ ι
                                   ≡⟨ lemma1 {M} {ι} {ι ∘ ι} (∼*ρ , (λ _ _ → refl) ) ⟩

@@ -1,13 +1,11 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+module CFramework.CTerm (C : Set) where
 
-module CFramework.CTerm where
-
-open import NaturalProp
-open import ListProperties
-open import Chi
+open import CFramework.Misc.NaturalProp
+open import CFramework.Misc.ListProperties
+open import CFramework.CChi
 
 open import Data.String using (String)
-open import Data.Nat as Nat hiding (_*_)
+open import Data.Nat as Nat hiding (_*_; _⊔_)
 open import Data.Nat.Properties
 open import Data.Bool hiding (_≟_;_∨_)
 open import Data.Empty
@@ -16,7 +14,7 @@ open import Function.Inverse hiding (sym;_∘_;map;id)
 open Inverse
 import Function.Equality as FE
 open import Data.Sum hiding (map) renaming (_⊎_ to _∨_)
-open import Data.Product renaming (Σ to Σₓ;map to mapₓ;_,_ to _∶_) public
+open import Data.Product renaming (Σ to Σₓ;map to mapₓ)
 open import Relation.Nullary 
 open import Relation.Nullary.Decidable hiding (map)
 open import Relation.Binary hiding (Rel)
@@ -26,13 +24,17 @@ open import Algebra.Structures
 open DecTotalOrder Nat.decTotalOrder using () renaming (refl to ≤-refl)
 open ≤-Reasoning
   renaming (begin_ to start_; _∎ to _◽; _≡⟨_⟩_ to _≤⟨_⟩'_)
+open import Agda.Primitive
+import Relation.Binary as RB
+import Relation.Unary as RU
+  
+infixr 4 _∶_
+_∶_ : ∀ {a b} → {A : Set a} → {B : A → Set b} → (x : A) → (y : B x) → Σ[ x ∈ A ](B x)
+x ∶ y = x , y
 
 infixl 6 _·_ 
 infix 3 _#_ 
 infix 1 _*_ 
-
-C : Set
-C = String
 
 data Λ : Set where
   k : C → Λ 
@@ -151,7 +153,18 @@ M ∼* M' = (∀ x → x * M → x * M') × (∀ x → x * M' → x * M)
 ∼*ρ : Reflexive _∼*_
 ∼*ρ {M} = (λ _ → id) ∶ (λ _ → id) 
 
-open import Relation Λ
+Rel : Set (lsuc lzero)
+Rel = RB.Rel Λ lzero 
+
+Pred : Set (lsuc lzero)
+Pred = RU.Pred Λ lzero
+
+infix 2 _preserved-by_
+_preserved-by_ : Pred → Rel → Set 
+P preserved-by R = ∀ {M N} → P M → R M N → P N
+
+dual : Rel → Rel
+dual R m n = R n m
 
 dual-#-* : {R : Rel}{y : V} → (_#_ y) preserved-by R → (_*_ y) preserved-by (dual R)
 dual-#-* {R} {y} #-pres-R {m} {m'} y*m m'Rm with y #? m'
@@ -162,5 +175,3 @@ dual-*-# : {R : Rel}{y : V} → (_*_ y) preserved-by (dual R) → (_#_ y) preser
 dual-*-# {R} {y} *-pres-R {m} {m'} y#m m'Rm with y #? m'
 ... | yes y#m' = y#m'
 ... | no ¬y#m' = ⊥-elim (lemma-free→¬# (*-pres-R (lemma¬#→free ¬y#m') m'Rm) y#m) 
-
-

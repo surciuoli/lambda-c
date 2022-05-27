@@ -1,9 +1,8 @@
-open import CFramework.CTerm
+import CFramework.CTerm as CTerm
 
-open import Relation.Binary.Core hiding (_⇒_)
-open import Relation.Unary using (Pred)
+open import Agda.Primitive
 
-module CFramework.CReducibility {ℓ : _} (_▹_ : Rel Λ ℓ) (Ne : Pred Λ ℓ) where
+module CFramework.CReducibility (C : Set) (_▹_ : CTerm.Rel C) where
 
 open import Data.Nat as Nat hiding (_*_)
 open import Data.Product renaming (map to mapΣ)
@@ -11,61 +10,51 @@ open import Induction.WellFounded as WF
 open import Data.Empty
 open import Relation.Binary.PropositionalEquality as P hiding ([_])
 open import Relation.Nullary
-open import Agda.Primitive
 
-open import Chi hiding (+-comm)
-open import CFramework.CSubstitution renaming (Σ to Subst) hiding (_∘_; R)
-open import CFramework.CSubstitutionLemmas 
-open import ListProperties hiding (_-_)
-open import CFramework.CAlpha
+open CTerm C
+open import CFramework.CChi hiding (+-comm)
+open import CFramework.CSubstitution C renaming (Σ to Subst) hiding (_∘_; R)
+open import CFramework.CSubstitutionLemmas C
+open import CFramework.Misc.ListProperties hiding (_-_)
+open import CFramework.CAlpha C
 open import CFramework.CType
-open import Context Type _≟_
-open import CFramework.CReduction _▹_ as Reduction
-open import CFramework.CDefinitions
+open import CFramework.CContext Type _≟_
+open import CFramework.CReduction C _▹_ as Reduction
+open import CFramework.CDefinitions C
+open import CFramework.CSN C _▹_ as SN
 
-dual→β : Λ → Λ → Set ℓ
-dual→β = λ M N → N ⟿ M
-  
-sn : Λ → Set ℓ
-sn M = Acc {lzero} {ℓ} {Λ} dual→β M
-
-Nf : Λ → Set ℓ
+Nf : Λ → Set
 Nf M = ∀ {N} → ¬(M ⟿ N)
 
-Red : Type → Λ → Set ℓ
+Red : Type → Λ → Set
 Red τ M = sn M 
 Red (α ⇒ β) M = ∀ {N} → Red α N → Red β (M · N)
 
-RedSubst : Subst → Cxt → Set ℓ
+RedSubst : Subst → Cxt → Set
 RedSubst σ Γ  = ∀ x → (k : x ∈ Γ) → Red (Γ ⟨ k ⟩) (σ x)
 
-inversionSnApp : ∀ {M N} → sn (M · N) → sn M × sn N
-inversionSnApp {M} {N} (acc snMN) = acc (λ M′ M→M′ → proj₁ (inversionSnApp (snMN (M′ · N) (appL M→M′)))) , acc (λ N′ N→N′ → proj₂ (inversionSnApp (snMN (M · N′) (appR N→N′))))
+Red-upd : ∀ {α Γ σ N} → RedSubst σ Γ → (x : V) → Red α N → RedSubst (σ ≺+ (x , N)) (Γ ‚ x ∶ α)
+Red-upd Redσ x RedN y y∈Γ,x:α with x ≟ y
+Red-upd Redσ x RedN y (there _ y∈Γ)  | no _ = Redσ y y∈Γ
+Red-upd Redσ x RedN .x here          | no x≢y = ⊥-elim (x≢y refl)
+Red-upd Redσ x RedN .x (there x≢y _) | yes refl = ⊥-elim (x≢y refl)
+Red-upd Redσ x RedN .x here          | yes refl = RedN
 
-record ConditionsNe : Set ℓ where
+closureRed∼α : Comm∼α _⟿_ → ∀ {α M N} → Red α M → M ∼α N → Red α N
+closureRed∼α h {τ} = closureSn∼α h
+closureRed∼α h {_ ⇒ _} RedM M∼N RedP = closureRed∼α h (RedM RedP) (∼· M∼N ∼ρ)
+
+record ConditionsNe (Ne : Pred) : Set where
   field
     cond1 : ∀ {x} → Ne (v x)
     cond2 : ∀ {M} → Ne M → ∀ {N} → Ne (M · N)
     cond3 : ∀ {M} → Ne M → ∀ {N P} → ¬((M · N) ▹ P)
 
-record Conditions▹ : Set ℓ where
+record Conditions▹ : Set where
   field
     cond1 : ∀ {x M} → ¬(v x ▹ M)
 
-module Properties (pres : Preserves* _▹_) (compat : Compat∙ _▹_) (comm : Comm∼α _▹_) (condNe : ConditionsNe) (cond▹ : Conditions▹) where
-  open Reduction.CommutesAlpha pres compat comm
-
-  closureSn∼α : ∀ {M N} → sn M → M ∼α N → sn N
-  closureSn∼α {M} {N} (acc snM) M∼N = acc aux
-    where
-      aux : ∀ P → N ⟿ P → sn P
-      aux P N→P =
-        let Q , M→Q , Q∼P = commut∼α⟿ M∼N N→P
-        in closureSn∼α (snM Q M→Q) Q∼P
-
-  closureRed∼α : ∀ {α M N} → Red α M → M ∼α N → Red α N
-  closureRed∼α {τ} = closureSn∼α
-  closureRed∼α {_ ⇒ _} RedM M∼N RedP = closureRed∼α (RedM RedP) (∼· M∼N ∼ρ)
+module RedProperties (Ne : Pred) (condNe : ConditionsNe Ne) (cond▹ : Conditions▹) where
 
   lemmaNfV : ∀ {x} → Nf (v x)
   lemmaNfV (redex r) = Conditions▹.cond1 cond▹ r
@@ -96,11 +85,4 @@ module Properties (pres : Preserves* _▹_) (compat : Compat∙ _▹_) (comm : C
 
   Red-ι : ∀ {Γ} → RedSubst ι Γ
   Red-ι = λ _ _ → CR4 (ConditionsNe.cond1 condNe) lemmaNfV
-
-  Red-upd : ∀ {α Γ σ N} → RedSubst σ Γ → (x : V) → Red α N → RedSubst (σ ≺+ (x , N)) (Γ ‚ x ∶ α)
-  Red-upd Redσ x RedN y y∈Γ,x:α with x ≟ y
-  Red-upd Redσ x RedN y (there _ y∈Γ) | no _ = Redσ y y∈Γ
-  Red-upd Redσ x RedN .x (here refl) | no x≢y = ⊥-elim (x≢y refl)
-  Red-upd Redσ x RedN .x (there x≢y _) | yes refl = ⊥-elim (x≢y refl)
-  Red-upd Redσ x RedN .x (here refl) | yes refl = RedN
 

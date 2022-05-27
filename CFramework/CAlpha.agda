@@ -1,8 +1,8 @@
-module CFramework.CAlpha where
+module CFramework.CAlpha (C : Set) where
 
-open import Chi
-open import CFramework.CTerm
-open import CFramework.CSubstitution 
+open import CFramework.CChi
+open import CFramework.CTerm C
+open import CFramework.CSubstitution C
 
 open import Function
 open import Data.Empty

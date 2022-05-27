@@ -2,23 +2,24 @@ open import Level
 open import Data.Product
 open import Data.Nat hiding (_*_)
 open import Relation.Nullary
-open import Relation.Binary.Core
+--open import Relation.Binary.Core
 import Relation.Binary.PreorderReasoning as PreR
 open import Relation.Binary.PropositionalEquality.Core
 open import Data.Empty
 
-open import CFramework.CTerm
-open import CFramework.CSubstitution
-open import CFramework.CSubstitutionLemmas
-open import CFramework.CAlpha
-open import CFramework.CDefinitions
+import CFramework.CTerm as CTerm
 
-module CFramework.CReduction {ℓ : _} (_▹_ : Rel Λ ℓ) where
+module CFramework.CReduction (C : Set) (_▹_ : CTerm.Rel C) where
 
-open import Chi
+open CTerm C
+open import CFramework.CSubstitution C
+open import CFramework.CSubstitutionLemmas C
+open import CFramework.CAlpha C
+open import CFramework.CDefinitions C
+open import CFramework.CChi
 
 infix 3 _⟿_
-data _⟿_ : Λ → Λ → Set ℓ where
+data _⟿_ : Rel where
   abs : ∀ {x M N} → M ⟿ N → ƛ x M ⟿ ƛ x N
   appL : ∀ {M N P} → M ⟿ N → M · P ⟿ N · P
   appR : ∀ {M N P} → M ⟿ N → P · M ⟿ P · N
@@ -63,12 +64,12 @@ module CommutesAlpha (pres : Preserves* _▹_) (compat : Compat∙ _▹_) (comm 
   ... | yes y#N = y#N
   ... | no ¬y#N = ⊥-elim (lemma-free→¬# (lemma*⟿⁻¹ (lemma¬#→free ¬y#N) M→N) y#M) 
 
-  commut∼α⟿ : Comm∼α _⟿_
-  commut∼α⟿ (∼· {M} {M′} {N} {N′} M~M′ N~N′) (appL M′→M″) with commut∼α⟿ M~M′ M′→M″
+  commut⟿α : Comm∼α _⟿_
+  commut⟿α (∼· {M} {M′} {N} {N′} M~M′ N~N′) (appL M′→M″) with commut⟿α M~M′ M′→M″
   ... | P , M→P , P∼M″ = P · N , appL M→P , ∼· P∼M″ N~N′
-  commut∼α⟿ {M · N} {M′ · N′} {.M′ · N″} (∼· M~M′ N~N′) (appR N′→N″) with commut∼α⟿ N~N′ N′→N″
+  commut⟿α {M · N} {M′ · N′} {.M′ · N″} (∼· M~M′ N~N′) (appR N′→N″) with commut⟿α N~N′ N′→N″
   ... | P , N→P , P∼N″ = M · P , appR N→P , ∼· M~M′ P∼N″
-  commut∼α⟿ {ƛ x M} {ƛ y N} {ƛ .y P} (∼ƛ {y = z} z#ƛxM z#ƛyN M[z/x]~N[z/y]) (abs N→P) = ƛ x R′ , abs (proj₁ (proj₂ r)) , ∼τ ƛxR∼ƛyP[y/x] (∼σ (corollary4-2' x#ƛyP))
+  commut⟿α {ƛ x M} {ƛ y N} {ƛ .y P} (∼ƛ {y = z} z#ƛxM z#ƛyN M[z/x]~N[z/y]) (abs N→P) = ƛ x R′ , abs (proj₁ (proj₂ r)) , ∼τ ƛxR∼ƛyP[y/x] (∼σ (corollary4-2' x#ƛyP))
     where
       q : Σ[ Q ∈ Λ ](N [ v x / y ] ⟿ Q × Q ∼α P [ v x / y ])
       q = compat⟿∙ N→P
@@ -87,11 +88,11 @@ module CommutesAlpha (pres : Preserves* _▹_) (compat : Compat∙ _▹_) (comm 
         N [ v z / y ] [ v x / z ] ≈⟨ sym (lemma≺+ z#ƛyN) ⟩ 
         N [ v x / y ]             ∎
       r : Σ[ R ∈ Λ ](M ⟿ R × R ∼α Q)
-      r = commut∼α⟿ M∼N[x/y] (proj₁ (proj₂ q))
+      r = commut⟿α M∼N[x/y] (proj₁ (proj₂ q))
       R′ : Λ
       R′ = proj₁ r
       ƛxR∼ƛyP[y/x] : ƛ x R′ ∼α ƛ x (P [ v x / y ])
       ƛxR∼ƛyP[y/x] = lemma∼λ (∼τ (proj₂ (proj₂ r)) (proj₂ (proj₂ q)))
       x#ƛyP : x # ƛ y P
       x#ƛyP = lemma#⟿ x#ƛyN (abs N→P)
-  commut∼α⟿ M∼N (redex NRP) = map (λ x → x) (map redex (λ x → x)) (comm M∼N NRP)
+  commut⟿α M∼N (redex NRP) = map (λ x → x) (map redex (λ x → x)) (comm M∼N NRP)

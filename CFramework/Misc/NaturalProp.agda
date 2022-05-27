@@ -1,4 +1,4 @@
-module NaturalProp where
+module CFramework.Misc.NaturalProp where
 
 open import Data.Nat as Nat hiding (_*_)
 open import Data.Nat.Properties
