@@ -25,21 +25,24 @@ data _⟿_ : Rel where
   appR : ∀ {M N P} → M ⟿ N → P · M ⟿ P · N
   redex : ∀ {M N} → M ▹ N → M ⟿ N
 
-module PreservesFreedom (pres : Preserves* _▹_) where
+module PreservesFreshness (pres# : Preserves# _▹_) where
 
-  lemma*⟿⁻¹ : Preserves* _⟿_
+  pres* : AntiPreserves* _▹_
+  pres* = dual-#-* pres#
+
+  lemma*⟿⁻¹ : AntiPreserves* _⟿_
   lemma*⟿⁻¹ (*·l x*N) (appL M⟿N) = *·l (lemma*⟿⁻¹ x*N M⟿N)
   lemma*⟿⁻¹ (*·r x*N') (appL M⟿N) = *·r x*N'
   lemma*⟿⁻¹ (*·l x*N) (appR M⟿N) = *·l x*N
   lemma*⟿⁻¹ (*·r x*N') (appR M⟿N) = *·r (lemma*⟿⁻¹ x*N' M⟿N)
   lemma*⟿⁻¹ (*ƛ x*N y≢x) (abs M⟿N) = *ƛ (lemma*⟿⁻¹ x*N M⟿N) y≢x
-  lemma*⟿⁻¹ x*N (redex rMN) = pres x*N rMN
+  lemma*⟿⁻¹ x*N (redex rMN) = pres* x*N rMN
 
   lemma#⇂⟿ : ∀ {x M N σ} → x #⇂ (σ , M) → M ⟿ N → x #⇂ (σ , N)
   lemma#⇂⟿ {x} h M→N y y*N = h y (lemma*⟿⁻¹ y*N M→N)
 
-module CompatSubst (pres : Preserves* _▹_) (compat : Compat∙ _▹_) where
-  open PreservesFreedom pres
+module CompatSubst (pres : Preserves# _▹_) (compat : Compat∙ _▹_) where
+  open PreservesFreshness pres
   
   compat⟿∙ : Compat∙ _⟿_ 
   compat⟿∙ {ƛ x M} {ƛ .x N} {σ} (abs M→N) with compat⟿∙ M→N
@@ -55,8 +58,8 @@ module CompatSubst (pres : Preserves* _▹_) (compat : Compat∙ _▹_) where
   ... | P , M→P , P∼N = (M ∙ σ) · P , appR M→P , ∼· ∼ρ P∼N 
   compat⟿∙ (redex rMN) = map (λ x → x) (map redex (λ x → x)) (compat rMN)
 
-module CommutesAlpha (pres : Preserves* _▹_) (compat : Compat∙ _▹_) (comm : Comm∼α _▹_) where
-  open PreservesFreedom pres
+module CommutesAlpha (pres : Preserves# _▹_) (compat : Compat∙ _▹_) (comm : Comm∼α _▹_) where
+  open PreservesFreshness pres
   open CompatSubst pres compat
 
   lemma#⟿ : ∀ {x M N} → x # M → M ⟿ N → x # N

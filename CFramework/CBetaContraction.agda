@@ -19,11 +19,14 @@ open import CFramework.CDefinitions C
 infix 3 _▹β_
 data _▹β_ : Λ → Λ → Set where beta : ∀ {x M N} → ƛ x M · N ▹β M [ N / x ]
 
-preser▹β# : Preserves* _▹β_
-preser▹β# {x} .{ƛ y M · N} x*M[y/N] (beta {y} {M} {N}) with lemmafreeσ→ {x} {M} x*M[y/N]
+preser▹β* : AntiPreserves* _▹β_
+preser▹β* {x} .{ƛ y M · N} x*M[y/N] (beta {y} {M} {N}) with lemmafreeσ→ {x} {M} x*M[y/N]
 ...  | z , z*M , x*z[y/N] with y ≟ z
-preser▹β# {x} .{ƛ y M · N} x*M[y/N] (beta {y} {M} {N}) | .y , y*M , x*N | yes refl = *·r x*N
-preser▹β# {x} .{ƛ y M · N} x*M[y/N] (beta {y} {M} {N}) | .x , x*M , *v | no y≢z = *·l (*ƛ x*M y≢z)
+preser▹β* {x} .{ƛ y M · N} x*M[y/N] (beta {y} {M} {N}) | .y , y*M , x*N | yes refl = *·r x*N
+preser▹β* {x} .{ƛ y M · N} x*M[y/N] (beta {y} {M} {N}) | .x , x*M , *v | no y≢z = *·l (*ƛ x*M y≢z)
+
+preser▹β# : Preserves# _▹β_
+preser▹β# = dual-*-# preser▹β*
 
 compat▹β∙ : Compat∙ _▹β_ 
 compat▹β∙ .{ƛ x M · N} {_} {σ} (beta {x} {M} {N}) = (M ∙ σ ≺+ (x , v y)) ∙ ι ≺+ (y , N ∙ σ) , beta , aux

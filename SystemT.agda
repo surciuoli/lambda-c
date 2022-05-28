@@ -114,13 +114,16 @@ conditionsNeT = record
   ; cond3 = cond3
   }
 
-lemma*◃T : Preserves* _▹T_
-lemma*◃T x*M (beta M▹βN) = preser▹β# x*M M▹βN
+lemma*◃T : AntiPreserves* _▹T_
+lemma*◃T x*M (beta M▹βN) = preser▹β* x*M M▹βN
 lemma*◃T x*N recO = *·l (*·l (*·r x*N))
 lemma*◃T (*·l (*·l x*M)) recS = *·l (*·r x*M)
 lemma*◃T (*·l (*·r x*N)) recS = *·r (*·r x*N)
 lemma*◃T (*·r (*·l x*RecGH)) recS = *·l x*RecGH
 lemma*◃T (*·r (*·r x*N)) recS = *·r (*·r x*N)
+
+lemma#◃T : Preserves# _▹T_
+lemma#◃T = dual-*-# lemma*◃T
 
 compat▹T∙ : Compat∙ _▹T_ 
 compat▹T∙ (beta M▹βN) = mapΣ id (mapΣ beta id) (compat▹β∙ M▹βN)
@@ -133,7 +136,7 @@ commut∼α▹T (∼· (∼· (∼· {_} {_} {G} ∼k G∼G′) _) ∼k) recO = 
 commut∼α▹T (∼· (∼· {_} {_} {H} (∼· {_} {_} {G} ∼k G∼G′) H∼H′) (∼· {_} {_} {N} ∼k N∼N′)) recS =
   H · N · (k Rec · G · H · N) , recS , ∼· (∼· H∼H′ N∼N′) (∼· (∼· (∼· ∼k G∼G′) H∼H′) N∼N′)
 
-open Reduction.CompatSubst lemma*◃T compat▹T∙
+open Reduction.CompatSubst lemma#◃T compat▹T∙
 open Reducibility.RedProperties NeT conditionsNeT conditions▹T --lemma*◃T compat▹T∙ commut∼α▹T conditionsNeβ conditions▹T
 
 lemmaSν : ∀ {M} (p : sn M) (q : sn (k S · M)) → ν p ≡ ν q
@@ -217,7 +220,7 @@ lemmaRec {α} {G} {H} {N} (acc snG) (acc snH) snN accLex RedG RedH = CR3 neRec (
       where snN′ : sn N′ 
             snN′ = snN N′ N→N′
 
-open Reduction.CommutesAlpha lemma*◃T compat▹T∙ commut∼α▹T -- commut∼α⟿
+open Reduction.CommutesAlpha lemma#◃T compat▹T∙ commut∼α▹T -- commut∼α⟿
 
 lemmaAbs : ∀ {x M N α β} → sn M → sn N → Red α N → (∀ {P} → Red α P → Red β (M [ P / x ])) → Red β (ƛ x M · N)
 lemmaAbs snM snN RedN RedM[P/x] = CR3 beta (hyp-aux snM snN RedN RedM[P/x])

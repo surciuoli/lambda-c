@@ -20,14 +20,6 @@ sn = Acc (dual _⟿_)
 inversionSnApp : ∀ {M N} → sn (M · N) → sn M × sn N
 inversionSnApp {M} {N} (acc snMN) = acc (λ M′ M→M′ → proj₁ (inversionSnApp (snMN (M′ · N) (appL M→M′)))) , acc (λ N′ N→N′ → proj₂ (inversionSnApp (snMN (M · N′) (appR N→N′))))
 
-{-closureSn∼α : Comm∼α _⟿_ → ∀ {M N} → sn M → M ∼α N → sn N
-closureSn∼α h {M} {N} (acc snM) M∼N = acc aux
-  where
-    aux : ∀ P → N ⟿ P → sn P
-    aux P N→P =
-      let Q , M→Q , Q∼P = h M∼N N→P
-      in closureSn∼α h (snM Q M→Q) Q∼P-}
-
 closureSn∼α : Comm∼α _⟿_ → ∀ {M N} → sn M → M ∼α N → sn N
 closureSn∼α h {M} {N} (acc snM) M∼N =
   acc λ P P←N → let Q , M→Q , Q∼P = h M∼N P←N

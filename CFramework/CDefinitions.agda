@@ -8,8 +8,11 @@ open import CFramework.CSubstitution C
 open import CFramework.CSubstitutionLemmas C
 open import CFramework.CAlpha C
 
-Preserves* : Rel → Set
-Preserves* r = ∀ {x M N} → x * N → r M N → x * M
+AntiPreserves* : Rel → Set
+AntiPreserves* r = ∀ {x M N} → x * N → r M N → x * M
+
+Preserves# : Rel → Set
+Preserves# r = ∀ {x M N} → x # M → r M N → x # N
 
 Compat∙ : Rel → Set
 Compat∙ r = ∀ {M N σ} → r M N → Σ[ P ∈ Λ ](r (M ∙ σ) P × P ∼α N ∙ σ)
