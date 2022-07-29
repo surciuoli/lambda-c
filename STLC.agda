@@ -27,8 +27,7 @@ data _⊢_∶_ (Γ : Cxt) : Term → Type → Set where
 
 data Neβ : Term → Set where
   var : ∀ {x} → Neβ (v x)
-  app : ∀ {M} → Neβ M → ∀ {N} → Neβ (M · N)
-  beta : ∀ {x M N} → Neβ (ƛ x M · N)
+  app : ∀ {M N} → Neβ (M · N)
 
 -- First step:
 
@@ -42,19 +41,19 @@ conditions▹β = record
 conditionsNeβ : ConditionsNe Neβ
 conditionsNeβ = record
   { cond1 = var
-  ; cond2 = app
-  ; cond3 = λ { {_} var {_} {_} () ; {_} (app _) {_} {_} () ; {_} beta {_} {_} () }
+  ; cond2 = λ _ → app
+  ; cond3 = λ { {_} var {_} {_} () ; {_} app {_} {_} () }
   }
 
 open Reducibility.RedProperties Neβ conditionsNeβ conditions▹β
 
 -- Second step:
-
+ 
 open Reduction.CompatSubst preser▹β# compat▹β∙ renaming (compat⟿∙ to compat→β∙)
 open Reduction.CommutesAlpha preser▹β# compat▹β∙ commut▹βα renaming (commut⟿α to commut→βα)
 
 lemmaAbs : ∀ {x M N α β} → sn M → sn N → Red α N → (∀ {P} → Red α P → Red β (M [ P / x ])) → Red β (ƛ x M · N)
-lemmaAbs snM snN RedN RedM[P/x] = CR3 beta (hyp-aux snM snN RedN RedM[P/x])
+lemmaAbs snM snN RedN RedM[P/x] = CR3 app (hyp-aux snM snN RedN RedM[P/x])
   where
     hyp-aux : ∀ {α β x M N P} → sn M → sn N → Red α N → (∀ {P} → Red α P → Red β (M [ P / x ])) → ƛ x M · N →β P → Red β P
     hyp-aux _ _ RedN RedM[P/x] (redex beta) = RedM[P/x] RedN 
