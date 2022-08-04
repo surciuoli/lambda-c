@@ -18,6 +18,7 @@ open import Data.Nat.Properties
 open import Algebra.Structures
 open import Data.List.Any.Properties
 open import Data.Sum
+open import Agda.Primitive using (lzero)
 
 data C : Set where Rec : C; O : C; S : C
 
@@ -187,14 +188,8 @@ lemmaStepν {M} {N} {snM} (acc .snM) refl M→N = s≤′s p
     p : ν (snM N M→N) ≤′ max (mapL (λ{(P , M→P) → ν (snM P M→P)}) (reductio M))
     p = ≤⇒≤′ (lemmaMax (lemma∈Map {l = reductio M} {f = λ{(P , M→P) → ν (snM P M→P)}} (lemmaReductio M→N)) (≤′⇒≤ ≤′-refl))  --> The last parameter...
 
-lemmaNfS : Nf (k S)
-lemmaNfS (redex (beta ()))
-
-lemmaNfO : Nf (k O)
-lemmaNfO (redex (beta ()))
-
-lemmaNfVar : ∀ {y} → Nf (v y)
-lemmaNfVar (redex (beta ()))
+lemmaNfC : ∀ {c N} → {A : Set lzero} → k c →β N → A
+lemmaNfC (redex (beta ()))
 
 lemmaRec : ∀ {α G H N} → sn G → sn H → (p : sn N) → Acc _<-lex_ (ν p , ℓ N) → Red α G → Red (nat ⇒ α ⇒ α) H → Red α (k Rec · G · H · N)
 lemmaRec {α} {G} {H} {N} (acc snG) (acc snH) snN accLex RedG RedH = CR3 neRec (hyp-aux snN accLex)
@@ -238,8 +233,8 @@ lemmaAbs snM snN RedN RedM[P/x] = CR3 beta (hyp-aux snM snN RedN RedM[P/x])
     hyp-aux _ _ _ _ (appL (redex (beta ()))) 
         
 main : ∀ {α M σ Γ} → Γ ⊢ M ∶ α → RedSubst σ Γ → Red α (M ∙ σ)
-main ⊢zro _ = CR4 zro lemmaNfO
-main ⊢suc _ = CR4 {nat ⇒ nat} suc lemmaNfS
+main ⊢zro _ = CR3 zro lemmaNfC
+main ⊢suc _ = CR3 {nat ⇒ nat} suc lemmaNfC
 main (⊢rec {α}) _ RedG RedH {N} RedN =
   lemmaRec (CR1 RedG) (CR1 {nat ⇒ α ⇒ α} RedH) RedN (well-founded-lex <-well-founded <-well-founded (ν RedN , ℓ N)) RedG RedH
 main (⊢var {x} x∈Γ) Redσ = Redσ x x∈Γ
@@ -248,7 +243,7 @@ main {α ⇒ β} {ƛ x M} {σ} (⊢abs M:β) Redσ {N} RedN = lemmaAbs (CR1 RedM
     y : V
     y = χ (σ , ƛ x M)
     RedMσ,y/x : Red β (M ∙ σ ≺+ (x , v y))
-    RedMσ,y/x = main M:β (Red-upd Redσ x (CR4 var lemmaNfVar))
+    RedMσ,y/x = main M:β (Red-upd Redσ x (CR3 var lemmaNfV))
     RedMσ,y/x[P/y] : ∀ {P} → Red α P → Red β ((M ∙ σ ≺+ (x , v y)) [ P / y ])
     RedMσ,y/x[P/y] RedP = closureRed∼α commut⟿α (main M:β (Red-upd Redσ x RedP)) (∼σ (corollary1SubstLemma (χ-lemma2 σ (ƛ x M))))
 main (⊢app M:α→β N:α) Redσ = (main M:α→β Redσ) (main N:α Redσ)

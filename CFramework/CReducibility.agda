@@ -23,8 +23,8 @@ open import CFramework.CReduction C _▹_ as Reduction
 open import CFramework.CDefinitions C
 open import CFramework.CSN C _▹_ as SN
 
-Nf : Λ → Set
-Nf M = ∀ {N} → ¬(M ⟿ N)
+--Nf : Λ → Set
+--Nf M = ∀ {N} → ¬(M ⟿ N)
 
 Red : Type → Λ → Set
 Red τ M = sn M 
@@ -56,13 +56,13 @@ record Conditions▹ : Set where
 
 module RedProperties (Ne : Pred) (condNe : ConditionsNe Ne) (cond▹ : Conditions▹) where
 
-  lemmaNfV : ∀ {x} → Nf (v x)
-  lemmaNfV (redex r) = Conditions▹.cond1 cond▹ r
+  lemmaNfV :  ∀ {x N} → {A : Set lzero} → v x ⟿ N → A
+  lemmaNfV (redex r) = ⊥-elim (Conditions▹.cond1 cond▹ r)
 
   mutual 
     CR1 : ∀ {α M} → Red α M → sn M
     CR1 {τ} snM = snM
-    CR1 {α ⇒ β} Redα⇒β = proj₁ (inversionSnApp {N = v 0} (CR1 (Redα⇒β (CR4 (ConditionsNe.cond1 condNe) lemmaNfV))))
+    CR1 {α ⇒ β} Redα⇒β = proj₁ (inversionSnApp {N = v 0} (CR1 (Redα⇒β (CR3 (ConditionsNe.cond1 condNe) lemmaNfV))))
 
     CR2 : ∀ {α M N} → Red α M → M ⟿ N → Red α N
     CR2 {τ} {_} {N} (acc snM) (M→N) = snM N M→N
@@ -80,9 +80,9 @@ module RedProperties (Ne : Pred) (condNe : ConditionsNe Ne) (cond▹ : Condition
         hyp-aux _ h RedP _ (appL M→M') = h M→M' RedP
         hyp-aux {M} {P} {.M · P'} neM h RedP (acc snP) (appR P→P') = CR3-arrow neM h (CR2 RedP P→P') (snP P' P→P')       
 
-    CR4 : ∀ {α M} → Ne M → Nf M → Red α M
-    CR4 neM nfM = CR3 neM (λ r → ⊥-elim (nfM r))
+    --CR4 : ∀ {α M} → Ne M → Nf M → Red α M
+    --CR4 neM nfM = CR3 neM (λ r → ⊥-elim (nfM r))
 
   Red-ι : ∀ {Γ} → RedSubst ι Γ
-  Red-ι = λ _ _ → CR4 (ConditionsNe.cond1 condNe) lemmaNfV
+  Red-ι = λ _ _ → CR3 (ConditionsNe.cond1 condNe) lemmaNfV
 

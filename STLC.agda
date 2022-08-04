@@ -74,7 +74,7 @@ main {α ⇒ β} {ƛ x M} {σ} (⊢abs M:β) Redσ {N} RedN = lemmaAbs (CR1 RedM
     y : V
     y = χ (σ , ƛ x M)
     RedMσ,y/x : Red β (M ∙ σ ≺+ (x , v y))
-    RedMσ,y/x = main M:β (Red-upd Redσ x (CR4 var lemmaNfV))
+    RedMσ,y/x = main M:β (Red-upd Redσ x (CR3 var lemmaNfV))
     RedMσ,y/x[P/y] : ∀ {P} → Red α P → Red β ((M ∙ σ ≺+ (x , v y)) [ P / y ])
     RedMσ,y/x[P/y] RedP = closureRed∼α commut→βα (main M:β (Red-upd Redσ x RedP)) (∼σ (corollary1SubstLemma (χ-lemma2 σ (ƛ x M))))
 main (⊢app M:α→β N:α) Redσ = (main M:α→β Redσ) (main N:α Redσ)
