@@ -23,9 +23,6 @@ open import CFramework.CReduction C _▹_ as Reduction
 open import CFramework.CDefinitions C
 open import CFramework.CSN C _▹_ as SN
 
---Nf : Λ → Set
---Nf M = ∀ {N} → ¬(M ⟿ N)
-
 Red : Type → Λ → Set
 Red τ M = sn M 
 Red (α ⇒ β) M = ∀ {N} → Red α N → Red β (M · N)
@@ -71,7 +68,7 @@ module RedProperties (Ne : Pred) (condNe : ConditionsNe Ne) (cond▹ : Condition
     CR3 : ∀ {α M} → Ne M → (∀ {N} → M ⟿ N → Red α N) → Red α M
     CR3 {τ} _ h = acc (λ _ M→N → h M→N)
     CR3 {α ⇒ β} neM h RedP = CR3-arrow neM h RedP (CR1 RedP)
-
+    
     CR3-arrow : ∀ {α β M P} → Ne M → (∀ {N} → M ⟿ N → Red (α ⇒ β) N) → Red α P → sn P → Red β (M · P)
     CR3-arrow {α} {β} {M} neM h RedP snP = CR3 (ConditionsNe.cond2 condNe neM) (hyp-aux neM h RedP snP)
       where
@@ -79,9 +76,6 @@ module RedProperties (Ne : Pred) (condNe : ConditionsNe Ne) (cond▹ : Condition
         hyp-aux neM _ _ _ (redex redx) = ⊥-elim (ConditionsNe.cond3 condNe neM redx) 
         hyp-aux _ h RedP _ (appL M→M') = h M→M' RedP
         hyp-aux {M} {P} {.M · P'} neM h RedP (acc snP) (appR P→P') = CR3-arrow neM h (CR2 RedP P→P') (snP P' P→P')       
-
-    --CR4 : ∀ {α M} → Ne M → Nf M → Red α M
-    --CR4 neM nfM = CR3 neM (λ r → ⊥-elim (nfM r))
 
   Red-ι : ∀ {Γ} → RedSubst ι Γ
   Red-ι = λ _ _ → CR3 (ConditionsNe.cond1 condNe) lemmaNfV
