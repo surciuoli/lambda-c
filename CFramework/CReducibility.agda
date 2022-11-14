@@ -41,42 +41,50 @@ closureRed∼α : Comm∼α _⟿_ → ∀ {α M N} → Red α M → M ∼α N �
 closureRed∼α h {τ} = closureSn∼α h
 closureRed∼α h {_ ⇒ _} RedM M∼N RedP = closureRed∼α h (RedM RedP) (∼· M∼N ∼ρ)
 
-record ConditionsNe (Ne : Pred) : Set where
-  field
-    cond1 : ∀ {x} → Ne (v x)
-    cond2 : ∀ {M} → Ne M → ∀ {N} → Ne (M · N)
-    cond3 : ∀ {M} → Ne M → ∀ {N P} → ¬((M · N) ▹ P)
+data Vec : Λ → Λ → Set where
+  nil : ∀ {M} → Vec M M
+  cons : ∀ {M N} → Vec M N → ∀ {P} → Vec M (N · P)
 
-record Conditions▹ : Set where
-  field
-    cond1 : ∀ {x M} → ¬(v x ▹ M)
+Ne : Λ → Set
+Ne M = ∀ {N} → Vec M N → ∀ {P Q} → ¬ (N · P) ▹ Q
 
-module RedProperties (Ne : Pred) (condNe : ConditionsNe Ne) (cond▹ : Conditions▹) where
+lemmaVec : ∀ {M N P} → Vec (M · N) P → Vec M P
+lemmaVec nil = cons nil
+lemmaVec (cons vec) = cons (lemmaVec vec)
 
-  lemmaNfV :  ∀ {x N} → {A : Set lzero} → v x ⟿ N → A
-  lemmaNfV (redex r) = ⊥-elim (Conditions▹.cond1 cond▹ r)
+lemmaNe : ∀ {M} → Ne M → ∀ {N} → Ne (M · N)
+lemmaNe NeM vec = NeM (lemmaVec vec)
+
+module RedProperties (cond▹ : ∀ {x N} → Vec (v x) N → ∀ {Q} → ¬ N ▹ Q) where
+
+  lemmaNfV : ∀ {x N} → ¬(v x ⟿ N)
+  lemmaNfV (redex r) = ⊥-elim (cond▹ nil r)
+
+  lemmaNeV : ∀ {x} → Ne (v x)
+  lemmaNeV vec = cond▹ (cons vec)
 
   mutual 
     CR1 : ∀ {α M} → Red α M → sn M
-    CR1 {τ} snM = snM
-    CR1 {α ⇒ β} Redα⇒β = proj₁ (inversionSnApp {N = v 0} (CR1 (Redα⇒β (CR3 (ConditionsNe.cond1 condNe) lemmaNfV))))
-
     CR2 : ∀ {α M N} → Red α M → M ⟿ N → Red α N
+    CR3 : ∀ {α M} → Ne M → (∀ {N} → M ⟿ N → Red α N) → Red α M
+    
+    CR1 {τ} snM = snM
+    CR1 {α ⇒ β} Redα⇒β = proj₁ (inversionSnApp {N = v 0} (CR1 (Redα⇒β (CR3 lemmaNeV (λ 0⟿N → ⊥-elim (lemmaNfV 0⟿N))))))
+
     CR2 {τ} {_} {N} (acc snM) (M→N) = snM N M→N
     CR2 {α ⇒ β} RedM M→N RedP = CR2 (RedM RedP) (appL M→N)
   
-    CR3 : ∀ {α M} → Ne M → (∀ {N} → M ⟿ N → Red α N) → Red α M
     CR3 {τ} _ h = acc (λ _ M→N → h M→N)
     CR3 {α ⇒ β} neM h RedP = CR3-arrow neM h RedP (CR1 RedP)
     
     CR3-arrow : ∀ {α β M P} → Ne M → (∀ {N} → M ⟿ N → Red (α ⇒ β) N) → Red α P → sn P → Red β (M · P)
-    CR3-arrow {α} {β} {M} neM h RedP snP = CR3 (ConditionsNe.cond2 condNe neM) (hyp-aux neM h RedP snP)
+    CR3-arrow {α} {β} {M} NeM h RedP snP = CR3 (lemmaNe NeM) (hyp-aux NeM h RedP snP)
       where
         hyp-aux : ∀ {M P Q} → Ne M → (∀ {N} → M ⟿ N → Red (α ⇒ β) N) → Red α P → sn P → M · P ⟿ Q → Red β Q
-        hyp-aux neM _ _ _ (redex redx) = ⊥-elim (ConditionsNe.cond3 condNe neM redx) 
+        hyp-aux {M} {P} NeM _ _ _ (redex redx) = ⊥-elim (NeM nil redx)
         hyp-aux _ h RedP _ (appL M→M') = h M→M' RedP
-        hyp-aux {M} {P} {.M · P'} neM h RedP (acc snP) (appR P→P') = CR3-arrow neM h (CR2 RedP P→P') (snP P' P→P')       
+        hyp-aux {M} {P} {.M · P'} NeM h RedP (acc snP) (appR P→P') = CR3-arrow NeM h (CR2 RedP P→P') (snP P' P→P')       
 
   Red-ι : ∀ {Γ} → RedSubst ι Γ
-  Red-ι = λ _ _ → CR3 (ConditionsNe.cond1 condNe) lemmaNfV
+  Red-ι = λ _ _ → CR3 lemmaNeV (λ x⟿N → ⊥-elim (lemmaNfV x⟿N))
 

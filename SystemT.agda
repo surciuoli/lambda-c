@@ -20,7 +20,10 @@ open import Data.List.Any.Properties
 open import Data.Sum
 open import Agda.Primitive using (lzero)
 
-data C : Set where Rec : C; O : C; S : C
+data C : Set where
+  Rec : C
+  O : C
+  S : C
 
 open import CFramework.CChi hiding (+-comm)
 open import CFramework.CTerm C renaming (Λ to Term)
@@ -54,14 +57,6 @@ data _▹T_ : Term → Term → Set where
   recO : ∀ {G H} → k Rec · G · H · k O ▹T G
   recS : ∀ {G H N} → k Rec · G · H · (k S · N) ▹T H · N · (k Rec · G · H · N)
 
-data NeT : Term → Set where
-  var : ∀ {x} → NeT (v x)
-  zro : NeT (k O)
-  suc : NeT (k S)
-  app : ∀ {M} → NeT M → ∀ {N} → NeT (M · N)
-  beta : ∀ {x M N} → NeT (ƛ x M · N)
-  neRec : ∀ {G H N} → NeT (k Rec · G · H · N)
-  
 open import CFramework.CReduction C _▹T_ as Reduction renaming (_⟿_ to _→β_)
 open import CFramework.CReducibility C _▹T_ as Reducibility
 
@@ -93,28 +88,6 @@ open import CFramework.CSN C _▹T_
     
 open WF.Lexicographic _<′_ (λ _ → _<′_) renaming (_<_ to _<-lex_; well-founded to well-founded-lex)
 
-conditions▹T : Conditions▹
-conditions▹T = record
-  { cond1 = λ { {x} {M} (beta ()) }
-  }
-
-cond3 : ∀ {M} → NeT M → ∀ {N P} → ¬((M · N) ▹T P)
-cond3 var (beta ())
-cond3 zro (beta ())
-cond3 suc (beta ())
-cond3 (app _) (beta ())
-cond3 (app (app ())) recO
-cond3 (app (app ())) recS 
-cond3 beta (beta ()) 
-cond3 neRec (beta ())
-
-conditionsNeT : ConditionsNe NeT
-conditionsNeT = record
-  { cond1 = var
-  ; cond2 = app
-  ; cond3 = cond3
-  }
-
 lemma*◃T : AntiPreserves* _▹T_
 lemma*◃T x*M (beta M▹βN) = preser▹β* x*M M▹βN
 lemma*◃T x*N recO = *·l (*·l (*·r x*N))
@@ -137,8 +110,40 @@ commut∼α▹T (∼· (∼· (∼· {_} {_} {G} ∼k G∼G′) _) ∼k) recO = 
 commut∼α▹T (∼· (∼· {_} {_} {H} (∼· {_} {_} {G} ∼k G∼G′) H∼H′) (∼· {_} {_} {N} ∼k N∼N′)) recS =
   H · N · (k Rec · G · H · N) , recS , ∼· (∼· H∼H′ N∼N′) (∼· (∼· (∼· ∼k G∼G′) H∼H′) N∼N′)
 
+
 open Reduction.CompatSubst lemma#◃T compat▹T∙
-open Reducibility.RedProperties NeT conditionsNeT conditions▹T --lemma*◃T compat▹T∙ commut∼α▹T conditionsNeβ conditions▹T
+
+cond▹T : ∀ {x N} → Vec (v x) N → ∀ {Q} → ¬(N ▹T Q)
+cond▹T nil (beta ())
+cond▹T (cons ()) (beta beta)
+cond▹T (cons (cons (cons ()))) recO
+cond▹T (cons (cons (cons ()))) recS
+
+lemmaβTNe : ∀ {x M N} → Ne ((ƛ x M) · N)
+lemmaβTNe nil (beta ())
+lemmaβTNe (cons _) (beta ())
+lemmaβTNe (cons (cons ())) recO
+lemmaβTNe (cons (cons ())) recS
+
+lemmaRecNe : ∀ {G H N} → Ne (k Rec · G · H · N)
+lemmaRecNe nil (beta ())
+lemmaRecNe (cons _) (beta ())
+lemmaRecNe (cons (cons ())) recO
+lemmaRecNe (cons (cons ())) recS
+
+lemmaONe : Ne (k O)
+lemmaONe nil (beta ()) 
+lemmaONe (cons _) (beta ())
+lemmaONe (cons (cons ())) recO
+lemmaONe (cons (cons ())) recS
+
+lemmaSNe : Ne (k S)
+lemmaSNe nil (beta ()) 
+lemmaSNe (cons _) (beta ())
+lemmaSNe (cons (cons ())) recO
+lemmaSNe (cons (cons ())) recS
+
+open Reducibility.RedProperties cond▹T
 
 lemmaSν : ∀ {M} (p : sn M) (q : sn (k S · M)) → ν p ≡ ν q
 lemmaSν {M} (acc hp) (acc hq) = cong suc (cong max aux4)
@@ -192,7 +197,7 @@ lemmaNfC : ∀ {c N} → {A : Set lzero} → k c →β N → A
 lemmaNfC (redex (beta ()))
 
 lemmaRec : ∀ {α G H N} → sn G → sn H → (p : sn N) → Acc _<-lex_ (ν p , ℓ N) → Red α G → Red (nat ⇒ α ⇒ α) H → Red α (k Rec · G · H · N)
-lemmaRec {α} {G} {H} {N} (acc snG) (acc snH) snN accLex RedG RedH = CR3 neRec (hyp-aux snN accLex)
+lemmaRec {α} {G} {H} {N} (acc snG) (acc snH) snN accLex RedG RedH = CR3 lemmaRecNe (hyp-aux snN accLex)
   where
     hyp-aux : ∀ {N P} → (snN : sn N) → Acc _<-lex_ (ν snN , ℓ N) → k Rec · G · H · N →β P → Red α P
     hyp-aux _ _ (redex (beta ()))
@@ -218,7 +223,7 @@ lemmaRec {α} {G} {H} {N} (acc snG) (acc snH) snN accLex RedG RedH = CR3 neRec (
 open Reduction.CommutesAlpha lemma#◃T compat▹T∙ commut∼α▹T -- commut∼α⟿
 
 lemmaAbs : ∀ {x M N α β} → sn M → sn N → Red α N → (∀ {P} → Red α P → Red β (M [ P / x ])) → Red β (ƛ x M · N)
-lemmaAbs snM snN RedN RedM[P/x] = CR3 beta (hyp-aux snM snN RedN RedM[P/x])
+lemmaAbs snM snN RedN RedM[P/x] = CR3 lemmaβTNe (hyp-aux snM snN RedN RedM[P/x])
   where
     hyp-aux : ∀ {α β x M N P} → sn M → sn N → Red α N → (∀ {P} → Red α P → Red β (M [ P / x ])) → ƛ x M · N →β P → Red β P
     hyp-aux _ _ RedN RedM[P/x] (redex (beta beta)) = RedM[P/x] RedN 
@@ -233,8 +238,8 @@ lemmaAbs snM snN RedN RedM[P/x] = CR3 beta (hyp-aux snM snN RedN RedM[P/x])
     hyp-aux _ _ _ _ (appL (redex (beta ()))) 
         
 main : ∀ {α M σ Γ} → Γ ⊢ M ∶ α → RedSubst σ Γ → Red α (M ∙ σ)
-main ⊢zro _ = CR3 zro lemmaNfC
-main ⊢suc _ = CR3 {nat ⇒ nat} suc lemmaNfC
+main ⊢zro _ = CR3 lemmaONe lemmaNfC
+main ⊢suc _ = CR3 {nat ⇒ nat} lemmaSNe lemmaNfC
 main (⊢rec {α}) _ RedG RedH {N} RedN =
   lemmaRec (CR1 RedG) (CR1 {nat ⇒ α ⇒ α} RedH) RedN (well-founded-lex <-well-founded <-well-founded (ν RedN , ℓ N)) RedG RedH
 main (⊢var {x} x∈Γ) Redσ = Redσ x x∈Γ
@@ -243,7 +248,7 @@ main {α ⇒ β} {ƛ x M} {σ} (⊢abs M:β) Redσ {N} RedN = lemmaAbs (CR1 RedM
     y : V
     y = χ (σ , ƛ x M)
     RedMσ,y/x : Red β (M ∙ σ ≺+ (x , v y))
-    RedMσ,y/x = main M:β (Red-upd Redσ x (CR3 var lemmaNfV))
+    RedMσ,y/x = main M:β (Red-upd Redσ x (CR3 lemmaNeV (λ x⟿N → ⊥-elim (lemmaNfV x⟿N))))
     RedMσ,y/x[P/y] : ∀ {P} → Red α P → Red β ((M ∙ σ ≺+ (x , v y)) [ P / y ])
     RedMσ,y/x[P/y] RedP = closureRed∼α commut⟿α (main M:β (Red-upd Redσ x RedP)) (∼σ (corollary1SubstLemma (χ-lemma2 σ (ƛ x M))))
 main (⊢app M:α→β N:α) Redσ = (main M:α→β Redσ) (main N:α Redσ)

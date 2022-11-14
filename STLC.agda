@@ -18,6 +18,7 @@ open import CFramework.CContext Type _≟_
 open import CFramework.CBetaContraction ⊥
 open import CFramework.CReduction ⊥ _▹β_ as Reduction renaming (_⟿_ to _→β_)
 open import CFramework.CSN ⊥ _▹β_
+open import CFramework.CReducibility ⊥ _▹β_ as Reducibility
 
 infix 3 _⊢_∶_
 data _⊢_∶_ (Γ : Cxt) : Term → Type → Set where
@@ -25,35 +26,25 @@ data _⊢_∶_ (Γ : Cxt) : Term → Type → Set where
   ⊢abs : ∀ {x M α β} → Γ ‚ x ∶ α ⊢ M ∶ β → Γ ⊢ ƛ x M ∶ α ⇒ β
   ⊢app : ∀ {M N α β} → Γ ⊢ M ∶ α ⇒ β → Γ ⊢ N ∶ α → Γ ⊢ M · N ∶ β
 
-data Neβ : Term → Set where
-  var : ∀ {x} → Neβ (v x)
-  app : ∀ {M N} → Neβ (M · N)
-
 -- First step:
 
-open import CFramework.CReducibility ⊥ _▹β_ as Reducibility
+cond▹β : ∀ {x N} → Vec (v x) N → ∀ {Q} → ¬(N ▹β Q)
+cond▹β nil ()
+cond▹β (cons ()) beta
 
-conditions▹β : Conditions▹
-conditions▹β = record
-  { cond1 = λ { {x} {M} () }
-  }
+lemmaβNe : ∀ {x M N} → Ne ((ƛ x M) · N)
+lemmaβNe nil ()
+lemmaβNe (cons _) ()
 
-conditionsNeβ : ConditionsNe Neβ
-conditionsNeβ = record
-  { cond1 = var
-  ; cond2 = λ _ → app
-  ; cond3 = λ { {_} var {_} {_} () ; {_} app {_} {_} () }
-  }
-
-open Reducibility.RedProperties Neβ conditionsNeβ conditions▹β
+open Reducibility.RedProperties cond▹β
 
 -- Second step:
- 
+
 open Reduction.CompatSubst preser▹β# compat▹β∙ renaming (compat⟿∙ to compat→β∙)
 open Reduction.CommutesAlpha preser▹β# compat▹β∙ commut▹βα renaming (commut⟿α to commut→βα)
 
 lemmaAbs : ∀ {x M N α β} → sn M → sn N → Red α N → (∀ {P} → Red α P → Red β (M [ P / x ])) → Red β (ƛ x M · N)
-lemmaAbs snM snN RedN RedM[P/x] = CR3 app (hyp-aux snM snN RedN RedM[P/x])
+lemmaAbs snM snN RedN RedM[P/x] = CR3 lemmaβNe (hyp-aux snM snN RedN RedM[P/x])
   where
     hyp-aux : ∀ {α β x M N P} → sn M → sn N → Red α N → (∀ {P} → Red α P → Red β (M [ P / x ])) → ƛ x M · N →β P → Red β P
     hyp-aux _ _ RedN RedM[P/x] (redex beta) = RedM[P/x] RedN 
@@ -74,7 +65,7 @@ main {α ⇒ β} {ƛ x M} {σ} (⊢abs M:β) Redσ {N} RedN = lemmaAbs (CR1 RedM
     y : V
     y = χ (σ , ƛ x M)
     RedMσ,y/x : Red β (M ∙ σ ≺+ (x , v y))
-    RedMσ,y/x = main M:β (Red-upd Redσ x (CR3 var lemmaNfV))
+    RedMσ,y/x = main M:β (Red-upd Redσ x (CR3 lemmaNeV (λ x⟿N → ⊥-elim (lemmaNfV x⟿N))))
     RedMσ,y/x[P/y] : ∀ {P} → Red α P → Red β ((M ∙ σ ≺+ (x , v y)) [ P / y ])
     RedMσ,y/x[P/y] RedP = closureRed∼α commut→βα (main M:β (Red-upd Redσ x RedP)) (∼σ (corollary1SubstLemma (χ-lemma2 σ (ƛ x M))))
 main (⊢app M:α→β N:α) Redσ = (main M:α→β Redσ) (main N:α Redσ)
