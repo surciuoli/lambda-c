@@ -12,7 +12,7 @@ open import Relation.Binary.PropositionalEquality as P hiding ([_])
 open import Relation.Nullary
 
 open CTerm C
-open import CFramework.CChi hiding (+-comm)
+open import CFramework.CChi 
 open import CFramework.CSubstitution C renaming (Σ to Subst) hiding (_∘_; R)
 open import CFramework.CSubstitutionLemmas C
 open import CFramework.Misc.ListProperties hiding (_-_)

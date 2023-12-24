@@ -6,18 +6,21 @@ open import Data.Sum renaming (_⊎_ to _∨_;map to map+)
 open import Data.Nat
 open import Data.Product renaming (Σ to Σₓ;map to mapₓ) 
 open import Data.Bool hiding (_∨_;_≟_)
-open import Data.List hiding (any)
-open import Data.List hiding (any)
+open import Data.List hiding (any; filter) renaming (boolFilter to filter)
 open import Data.List.Properties
-open import Data.List.Any as Any hiding (map)
+open import Data.List.Relation.Unary.Any hiding (map)
+open import Data.List.Relation.Unary.Any.Properties
+open import Data.List.Any  hiding (map)
 open import Data.List.Any.Properties
-open import Data.List.Any.Membership
+open import Data.List.Membership.Propositional renaming (_∈_ to _∈'_;_∉_ to _∉'_)
+open import Data.List.Membership.Propositional.Properties
+open import Data.List.Relation.Subset.Propositional
+open import Algebra.Structures
 open import Relation.Nullary
 open import Relation.Nullary.Decidable
 open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as PropEq renaming ([_] to [_]ᵢ) 
 
-open Any.Membership-≡ renaming (_∈_ to _∈'_;_∉_ to _∉'_) 
 import Function.Equality as FE
 open import Function.Inverse hiding (sym;_∘_;map;id)
 open Inverse

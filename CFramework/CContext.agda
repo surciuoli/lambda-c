@@ -12,18 +12,18 @@ open import Data.Nat hiding (_≟_)
 open import Data.List hiding (any;all)
 open import Function
 open import Data.List.Any as Any hiding (map;tail)
-open import Data.List.Any.Membership
-open Any.Membership-≡  renaming (_∈_ to _∈l_;_⊆_ to _⊆l_)
+open import Data.List.Membership.Propositional renaming (_∈_ to _∈l_)
+open import Data.List.Membership.Propositional.Properties 
 open import Data.Product renaming (map to map×)
 open import Data.Sum hiding (map) renaming (_⊎_ to _∨_)
-open import Data.Maybe hiding (Any;All;map;setoid) --(Any;All;setoid) --
+open import Data.Maybe hiding (map)
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
 open import Relation.Binary.PropositionalEquality as PropEq renaming ([_] to [_]ᵢ) 
 
 infixl 3 _‚_ 
 infix 2 _⊆_
-infix 3 _∈_
+infix 2 _∈_
 
 Cxt : Set
 Cxt = List (K × D)

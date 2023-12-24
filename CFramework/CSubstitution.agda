@@ -10,9 +10,10 @@ open Inverse
 import Function.Equality as FE
 open import Data.List hiding (any) renaming (length to length') 
 open import Data.List.Any as Any hiding (map)
-open import Data.List.Any.Membership
-open import Data.List.Any.Properties
-open Any.Membership-≡ 
+open import Data.List.Relation.Binary.Subset.Propositional
+open import Data.List.Membership.Propositional
+open import Data.List.Membership.Propositional.Properties renaming (boolFilter-∈ to filter-∈) hiding (filter-∈)
+--open import Data.List.Any.Properties
 open import Data.Bool hiding (_≟_;_∨_)
 open import Data.Nat as Nat hiding (_*_)
 open import Data.Sum hiding (map) renaming (_⊎_ to _∨_)
@@ -22,8 +23,8 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as PropEq renaming ([_] to [_]ᵢ) 
 open import Relation.Nullary
 open import Relation.Nullary.Decidable hiding (map)
+open import Relation.Nullary.Negation
 open import Algebra.Structures
-open DecTotalOrder Nat.decTotalOrder using () renaming (refl to ≤-refl)
 
 infixl 8 _≺+_
 infix  5 _∙_ 
@@ -121,7 +122,7 @@ lemmafvfree← x .(ƛ y M)  (*ƛ {.x} {y} {M} xfreeM y≢x)
   px≡true with y ≟ x
   ... | yes y≡x = ⊥-elim (y≢x y≡x)
   ... | no  _   = refl
-
+  
 lemma∉fv→# : ∀ {a : V}{M : Λ} → a ∉ fv M → a # M
 lemma∉fv→# {a} {M} a∉fvM with a #? M
 ... | yes a#M = a#M
@@ -149,13 +150,13 @@ lemmaχₜ# {M} = lemma∉fv→# (lemmaχaux∉ (fv M))
   y∈fvM = lemmafvfree← y M yfreeM
   -- due to y ∈ fv M we have that fv (σ y) ∈ map (fv ∘ σ) (fv M)
   fvσy∈mapfv∘σfvM : fv (σ y) ∈ (map (fv ∘f σ) (fv M))
-  fvσy∈mapfv∘σfvM = ((FE.Π._⟨$⟩_ (to (map-∈↔ {f = fv ∘f σ} {y = fv (σ y)} {xs = fv M}))) (y , y∈fvM , refl))
+  fvσy∈mapfv∘σfvM = ((FE.Π._⟨$⟩_ (to (map-∈↔ (fv ∘f σ) {y = fv (σ y)} {xs = fv M}))) (y , y∈fvM , refl))
   -- we know ¬ χ # σ y ⇒ χ * (σ y), and then χ ∈ fv (σ y)
   χfreeσy : χ (σ , M) ∈ (fv (σ y))
   χfreeσy = lemmafvfree← (χ (σ , M)) (σ y) (lemma¬#→free ¬χσM#σy)
   -- χ ∈ fv (σ y) and fv (σ y) ∈ map (fv ∘ σ) (fv M) ⇒ χ ∈ concat (map (fv ∘f σ) (fv M))
   χ∈concatmapfv∘σfvM : χ (σ , M) ∈ (concat (map (fv ∘f σ) (fv M)))
-  χ∈concatmapfv∘σfvM = (FE.Π._⟨$⟩_ (to (concat-∈↔ {x = χ (σ , M)} {xss = map (fv ∘f σ) (fv M)}))) (fv (σ y) ,  χfreeσy , fvσy∈mapfv∘σfvM)
+  χ∈concatmapfv∘σfvM = (FE.Π._⟨$⟩_ (to (concat-∈↔ {xss = map (fv ∘f σ) (fv M)}))) (fv (σ y) ,  χfreeσy , fvσy∈mapfv∘σfvM)
 
 χ-lemma4 : (σ σ' : Σ)(M M' : Λ) → (σ , M) ∼*⇂ (σ' , M') → χ (σ , M) ≡ χ  (σ' , M')
 χ-lemma4 σ σ' M M' (h1 , h2) 
@@ -163,9 +164,9 @@ lemmaχₜ# {M} = lemma∉fv→# (lemmaχaux∉ (fv M))
   where
   lemma⊆ : ((concat (map (fv ∘f σ) (fv M)))) ⊆ (concat (map (fv ∘f σ') (fv M'))) 
   lemma⊆ {y} y∈concat 
-    with (FE.Π._⟨$⟩_ (from (concat-∈↔ {x = y} {xss = map (fv ∘f σ) (fv M)}))) y∈concat 
+    with (FE.Π._⟨$⟩_ (from (concat-∈↔ {xss = map (fv ∘f σ) (fv M)}))) y∈concat 
   ... | xs , y∈xs , xs∈map 
-    with (FE.Π._⟨$⟩_ (from ((map-∈↔ {y = xs} {xs = fv M})))) xs∈map
+    with (FE.Π._⟨$⟩_ (from ((map-∈↔ (fv ∘f σ) {xs = fv M})))) xs∈map
   lemma⊆ {y} y∈concat 
       | .(fv (σ x)) , y∈fvσx , fvσx∈map
       | x , x∈fvM , refl
@@ -175,14 +176,14 @@ lemmaχₜ# {M} = lemma∉fv→# (lemmaχaux∉ (fv M))
   ... | u , ufreeM' , yfreeσ'u 
     with lemmafvfree← u M' ufreeM' | lemmafvfree← y (σ' u) yfreeσ'u
   ... | u∈fvM' | y∈fvσ'u 
-    with (FE.Π._⟨$⟩_ (to ((map-∈↔ {f = fv ∘f σ'} {y = fv (σ' u)} {xs = fv M'})))) (u , u∈fvM' , refl)
+    with (FE.Π._⟨$⟩_ (to ((map-∈↔ (fv ∘f σ') {y = fv (σ' u)} {xs = fv M'})))) (u , u∈fvM' , refl)
   ... | fvσ'u∈map 
-     = (FE.Π._⟨$⟩_ (to (concat-∈↔ {x = y} {xss = map (fv ∘f σ') (fv M')}))) (fv (σ' u) , y∈fvσ'u , fvσ'u∈map) 
+     = (FE.Π._⟨$⟩_ (to (concat-∈↔ {xss = map (fv ∘f σ') (fv M')}))) (fv (σ' u) , y∈fvσ'u , fvσ'u∈map) 
   lemma⊇ : (concat (map (fv ∘f σ') (fv M'))) ⊆ ((concat (map (fv ∘f σ) (fv M))))
   lemma⊇ {y} y∈concat
-    with (FE.Π._⟨$⟩_ (from (concat-∈↔ {x = y} {xss = map (fv ∘f σ') (fv M')}))) y∈concat 
+    with (FE.Π._⟨$⟩_ (from (concat-∈↔ {xss = map (fv ∘f σ') (fv M')}))) y∈concat 
   ... | xs , y∈xs , xs∈map 
-    with (FE.Π._⟨$⟩_ (from ((map-∈↔ {y = xs} {xs = fv M'})))) xs∈map
+    with (FE.Π._⟨$⟩_ (from ((map-∈↔ (fv ∘f σ') {xs = fv M'})))) xs∈map
   lemma⊇ {y} y∈concat 
       | .(fv (σ' x)) , y∈fvσ'x , fvσ'x∈map
       | x , x∈fvM' , refl
@@ -192,9 +193,9 @@ lemmaχₜ# {M} = lemma∉fv→# (lemmaχaux∉ (fv M))
   ... | u , ufreeM , yfreeσu 
     with lemmafvfree← u M ufreeM | lemmafvfree← y (σ u) yfreeσu
   ... | u∈fvM | y∈fvσu 
-    with (FE.Π._⟨$⟩_ (to ((map-∈↔ {f = fv ∘f σ} {y = fv (σ u)} {xs = fv M})))) (u , u∈fvM , refl)
+    with (FE.Π._⟨$⟩_ (to ((map-∈↔ (fv ∘f σ) {y = fv (σ u)} {xs = fv M})))) (u , u∈fvM , refl)
   ... | fvσu∈map 
-     = (FE.Π._⟨$⟩_ (to (concat-∈↔ {x = y} {xss = map (fv ∘f σ) (fv M)}))) (fv (σ u) , y∈fvσu , fvσu∈map) 
+     = (FE.Π._⟨$⟩_ (to (concat-∈↔ {xss = map (fv ∘f σ) (fv M)}))) (fv (σ u) , y∈fvσu , fvσu∈map) 
 
 χ-lemma3 : (σ σ' : Σ)(M M' : Λ) → (∀ x → x * M → σ x ∼* σ' x) → M ∼* M' → χ (σ , M) ≡ χ  (σ' , M')
 χ-lemma3 σ σ' M M' x*M⇛σx∼σ'x (*M⇒M' , *M'⇒M) = χ-lemma4 σ σ' M M' (h1 , h2)

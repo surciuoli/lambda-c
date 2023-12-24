@@ -21,9 +21,7 @@ open import Relation.Binary hiding (Rel)
 open import Relation.Binary.PropositionalEquality as PropEq renaming ([_] to [_]ᵢ) 
 open import Data.List hiding (any) renaming (length to length') 
 open import Algebra.Structures
-open DecTotalOrder Nat.decTotalOrder using () renaming (refl to ≤-refl)
-open ≤-Reasoning
-  renaming (begin_ to start_; _∎ to _◽; _≡⟨_⟩_ to _≤⟨_⟩'_)
+open ≤-Reasoning renaming (begin_ to start_; _∎ to _◽; _≡⟨_⟩_ to _≤⟨_⟩'_)
 open import Agda.Primitive
 import Relation.Binary as RB
 import Relation.Unary as RU

@@ -14,15 +14,14 @@ open import Relation.Binary.PropositionalEquality as PropEq renaming ([_] to [_]
 open import Data.List hiding (any) renaming (length to length') 
 open import Data.List.Properties
 open import Data.List.Any as Any hiding (map)
-open import Data.List.Any.Membership
 open import Data.List.Any.Properties
-open Any.Membership-≡ renaming (_∈_ to _∈[]_;_∉_ to _∉[]_) 
+open import Data.List.Membership.Propositional renaming (_∈_ to _∈[]_;_∉_ to _∉[]_)
+open import Data.List.Relation.Binary.Subset.Propositional
 open import Algebra.Structures
 open import Relation.Binary
 --
-n+0≡n   = IsCommutativeMonoid.identityˡ (IsCommutativeSemiring.*-isCommutativeMonoid isCommutativeSemiring)
-+-comm  = IsCommutativeMonoid.comm (IsCommutativeSemiring.+-isCommutativeMonoid isCommutativeSemiring)
-total   = IsTotalOrder.total (IsDecTotalOrder.isTotalOrder (DecTotalOrder.isDecTotalOrder decTotalOrder))
+n+0≡n   = IsCommutativeMonoid.identityˡ (IsCommutativeSemiring.*-isCommutativeMonoid *-+-isCommutativeSemiring)
+total   = IsTotalOrder.total (IsDecTotalOrder.isTotalOrder (DecTotalOrder.isDecTotalOrder ≤-decTotalOrder))
 --
 V = ℕ
 --

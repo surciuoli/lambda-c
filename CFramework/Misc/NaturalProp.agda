@@ -6,12 +6,8 @@ open import Relation.Binary
 open import Relation.Binary.PropositionalEquality as PropEq renaming ([_] to [_]ᵢ) 
 open import Algebra.Structures
 open import Relation.Binary
-open DecTotalOrder Nat.decTotalOrder using () renaming (refl to ≤-refl)
-open ≤-Reasoning
-  renaming (begin_ to start_; _∎ to _◽; _≡⟨_⟩_ to _≤⟨_⟩'_)
+open ≤-Reasoning renaming (begin_ to start_; _∎ to _◽; _≡⟨_⟩_ to _≤⟨_⟩'_)
 
-+-comm = IsCommutativeMonoid.comm (IsCommutativeSemiring.+-isCommutativeMonoid isCommutativeSemiring)
--- Natural properties
 lemmam≡n→m+1≤n+1 : {m n : ℕ} → n ≡ m → suc m ≤′ suc n
 lemmam≡n→m+1≤n+1 {m} {.m} refl = ≤′-refl
 

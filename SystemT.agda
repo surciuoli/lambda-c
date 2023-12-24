@@ -6,8 +6,9 @@ open import Data.Product renaming (map to mapΣ)
 open import Induction.WellFounded as WF
 open import Data.Empty
 open import Data.List renaming (map to mapL)
-open import Data.List.Any as Any
-open Any.Membership-≡ renaming (_∈_ to _∈′_) hiding (_⊆_)
+open import Data.List.Any
+open import Data.List.Any.Properties
+open import Data.List.Membership.Propositional renaming (_∈_ to _∈′_)
 open import Function
 open import Relation.Binary.Core hiding (_⇒_)
 import Relation.Binary.PreorderReasoning as PreR
@@ -25,7 +26,7 @@ data C : Set where
   O : C
   S : C
 
-open import CFramework.CChi hiding (+-comm)
+open import CFramework.CChi
 open import CFramework.CTerm C renaming (Λ to Term)
 open import CFramework.CSubstitution C renaming (Σ to Subst) hiding (_∘_)
 open import CFramework.CSubstitutionLemmas C
@@ -36,7 +37,7 @@ open import CFramework.CType
 open import CFramework.CBetaContraction C
 open import CFramework.CDefinitions C
 
-infix 3 _⊢_∶_
+infix 2 _⊢_∶_
 
 open Context Type _≟_
 
@@ -176,13 +177,12 @@ lemmaReductio (redex (beta beta)) = here refl
 lemmaReductio (redex recO) = here refl
 lemmaReductio (redex recS) = here refl
 lemmaReductio (abs r) = lemma∈Map (lemmaReductio r)
-lemmaReductio {M · P} {N · .P} (appL r) = ++ʳ (red-aux (M · P)) (++ˡ (lemma∈Map (lemmaReductio r)))
-lemmaReductio {P · M} {.P · N} (appR r) = ++ʳ (red-aux (P · M)) (++ʳ (mapL (mapΣ (flip _·_ M) appL) (reductio P)) (lemma∈Map (lemmaReductio r)))
+lemmaReductio {M · P} {N · .P} (appL r) = ++⁺ʳ (red-aux (M · P)) (++⁺ˡ (lemma∈Map (lemmaReductio r)))
+lemmaReductio {P · M} {.P · N} (appR r) = ++⁺ʳ (red-aux (P · M)) (++⁺ʳ (mapL (mapΣ (flip _·_ M) appL) (reductio P)) (lemma∈Map (lemmaReductio r)))
 
 lemmaStepν : ∀ {M N ihM} (snM : sn M) → snM ≡ acc ihM → (M→N : M →β N) → ν (ihM N M→N) <′ ν snM
 lemmaStepν {M} {N} {snM} (acc .snM) refl M→N = s≤′s p
   where
-    ⊔-comm = IsCommutativeMonoid.comm (IsCommutativeSemiringWithoutOne.+-isCommutativeMonoid ⊔-⊓-0-isCommutativeSemiringWithoutOne)
     lemma⊔ : ∀ m n p → m ≤ n → m ≤ n ⊔ p
     lemma⊔ .0 n p z≤n = z≤n
     lemma⊔ ._ ._ 0 (s≤s r) = s≤s r
@@ -241,7 +241,7 @@ main : ∀ {α M σ Γ} → Γ ⊢ M ∶ α → RedSubst σ Γ → Red α (M ∙
 main ⊢zro _ = CR3 lemmaONe lemmaNfC
 main ⊢suc _ = CR3 {nat ⇒ nat} lemmaSNe lemmaNfC
 main (⊢rec {α}) _ RedG RedH {N} RedN =
-  lemmaRec (CR1 RedG) (CR1 {nat ⇒ α ⇒ α} RedH) RedN (well-founded-lex <-well-founded <-well-founded (ν RedN , ℓ N)) RedG RedH
+  lemmaRec (CR1 RedG) (CR1 {nat ⇒ α ⇒ α} RedH) RedN (well-founded-lex <′-well-founded <′-well-founded (ν RedN , ℓ N)) RedG RedH
 main (⊢var {x} x∈Γ) Redσ = Redσ x x∈Γ
 main {α ⇒ β} {ƛ x M} {σ} (⊢abs M:β) Redσ {N} RedN = lemmaAbs (CR1 RedMσ,y/x) (CR1 RedN) RedN RedMσ,y/x[P/y]
   where

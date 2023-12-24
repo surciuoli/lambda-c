@@ -7,7 +7,7 @@ open import Data.Empty
 open import Relation.Binary.PropositionalEquality as P hiding ([_])
 open import Relation.Nullary
 
-open import CFramework.CChi hiding (+-comm)
+open import CFramework.CChi
 open import CFramework.CTerm ⊥ renaming (Λ to Term)
 open import CFramework.CSubstitution ⊥ renaming (Σ to Subst) hiding (_∘_)
 open import CFramework.CSubstitutionLemmas ⊥
@@ -20,7 +20,7 @@ open import CFramework.CReduction ⊥ _▹β_ as Reduction renaming (_⟿_ to _�
 open import CFramework.CSN ⊥ _▹β_
 open import CFramework.CReducibility ⊥ _▹β_ as Reducibility
 
-infix 3 _⊢_∶_
+infix 2 _⊢_∶_
 data _⊢_∶_ (Γ : Cxt) : Term → Type → Set where
   ⊢var : ∀ {x} → (k : x ∈ Γ) → Γ ⊢ v x ∶ Γ ⟨ k ⟩
   ⊢abs : ∀ {x M α β} → Γ ‚ x ∶ α ⊢ M ∶ β → Γ ⊢ ƛ x M ∶ α ⇒ β

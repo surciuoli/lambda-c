@@ -7,6 +7,9 @@ open import CFramework.CAlpha C
 open import CFramework.Misc.NaturalProp
 open import CFramework.Misc.ListProperties
 
+open import Relation.Binary using (Decidable)
+open import Relation.Binary.PropositionalEquality using (_≡_)
+
 open import Data.Empty
 open import Data.Nat hiding (_*_)
 open import Relation.Nullary
@@ -19,8 +22,8 @@ open PropEq.≡-Reasoning renaming (begin_ to begin≡_;_∎ to _◻)
 open import Data.List hiding (any) renaming (length to length') 
 open import Data.List.Properties
 open import Data.List.Any as Any hiding (map)
-open import Data.List.Any.Membership
-open Any.Membership-≡ hiding (_⊆_)
+open import Data.List.Membership.Propositional
+open import Data.List.Membership.Propositional.Properties
 
 lemmaσ≡σ'→Mσ≡Mσ'  : {M : Λ}{σ σ' : Σ} 
                   → σ ≅ σ' ⇂ M 
@@ -237,7 +240,7 @@ lemmaMι≡M'ι→M∼M'-aux .(suc (length M)) rec (ƛ x M) (ƛ x' M') refl λxM
              (cong (λ M → M ∙ ι) Mι≺+xy≡M'ι≺+xy'))
 
 lemmaMι≡M'ι→M∼M' : {M M' : Λ} → M ∙ ι ≡ M' ∙ ι → M ∼α M' 
-lemmaMι≡M'ι→M∼M' {M} {M'} = (<-rec _ lemmaMι≡M'ι→M∼M'-aux) (length M) M M' refl
+lemmaMι≡M'ι→M∼M' {M} {M'} = (<′-rec _ lemmaMι≡M'ι→M∼M'-aux) (length M) M M' refl
 
 ∼ρ : Reflexive _∼α_
 ∼ρ {M} = lemmaMι≡M'ι→M∼M' refl
@@ -265,22 +268,22 @@ lemmaMι≡M'ι→M∼M' {M} {M'} = (<-rec _ lemmaMι≡M'ι→M∼M'-aux) (leng
         trans = ∼τ } }
 
 import Relation.Binary.PreorderReasoning as PreR
-open PreR ≈-preorder∼ --public
 
 lemma-σ⇂ : {M : Λ}{σ σ' : Σ} → σ ∼α σ' ⇂ M → ((ι ∘ σ) , M) ≅⇂ ((ι ∘ σ') , M)
 lemma-σ⇂ σ∼σ'⇂M  = ∼*ρ , (λ x xfreeM → lemmaM∼M'→Mσ≡M'σ (σ∼σ'⇂M  x xfreeM))
 --
 lemma-subst-σ∼ : {M : Λ}{σ σ' : Σ} → σ ∼α σ' ⇂ M → M ∙ σ ∼α M ∙ σ'
-lemma-subst-σ∼ {M} {σ} {σ'} σ∼ασ'⇂M 
-  = lemmaMι≡M'ι→M∼M' (begin≡
-                        (M ∙ σ) ∙ ι
-                        ≡⟨ lemma· {M} {σ} {ι} ⟩
-                        M ∙ (ι ∘ σ)
-                        ≡⟨  lemma-subst-σ≡ {M} {ι ∘ σ} {ι ∘ σ'} (lemma-σ⇂ σ∼ασ'⇂M) ⟩
-                        M ∙ (ι ∘ σ')
-                        ≡⟨ sym (lemma· {M} {σ'} {ι}) ⟩
-                        (M ∙ σ') ∙ ι
-                      ◻)
+lemma-subst-σ∼ {M} {σ} {σ'} σ∼ασ'⇂M = lemmaMι≡M'ι→M∼M' aux
+  where
+    aux : (M ∙ σ) ∙ ι ≡ (M ∙ σ') ∙ ι
+    aux = begin≡
+      (M ∙ σ) ∙ ι
+      ≡⟨ lemma· {M} {σ} {ι} ⟩
+      M ∙ (ι ∘ σ)
+      ≡⟨  lemma-subst-σ≡ {M} {ι ∘ σ} {ι ∘ σ'} (lemma-σ⇂ σ∼ασ'⇂M) ⟩
+      M ∙ (ι ∘ σ')
+      ≡⟨ sym (lemma· {M} {σ'} {ι}) ⟩
+      (M ∙ σ') ∙ ι                                               ◻
 
 lemma-subst : {M M' : Λ}{σ σ' : Σ} → 
   M ∼α M' → σ ∼α σ' ⇂ M → (M ∙ σ) ∼α (M' ∙ σ')
@@ -292,6 +295,7 @@ lemma-subst {M} {M'} {σ} {σ'} M∼M' σ∼σ'⇂M
        ≈⟨ lemmaM∼M'→Mσ≡M'σ M∼M'  ⟩
        M' ∙ σ'
      ∎
+  where open PreR ≈-preorder∼ 
 
 lemma∙ι : ∀ {M} → M ∼α M ∙ ι
 lemma∙ι {M} =  lemmaMι≡M'ι→M∼M' ( begin≡
@@ -321,6 +325,7 @@ lemmaι∘σ {σ} x = begin
                  ∼⟨ ∼σ (lemma∙ι) ⟩
                    σ x
                  ∎
+                 where open PreR ≈-preorder∼ 
 
 lemma∼≺+ : {x : V}{N : Λ}{σ σ' : Σ} → σ ∼ασ σ' → σ ≺+ (x , N) ∼ασ σ' ≺+ (x , N)
 lemma∼≺+ {x} σ∼σ' y with x ≟ y
@@ -336,6 +341,7 @@ prop8 {x} {y} {σ} {M} {N} y#⇂ƛxM z z*M =
                 ∼⟨ (lemma∼≺+ {x} {N} (lemmaι∘σ {σ})) z ⟩
                   (σ ≺+ (x , N)) z
                 ∎
+                where open PreR ≈-preorder∼ 
 
 corollary1Prop7 : {M N : Λ}{σ : Σ}{x : V} → M ∙ σ ≺+ (x , N ∙ σ) ≡ (M ∙ ι ≺+ (x , N)) ∙ σ
 corollary1Prop7 {M} {N} {σ} {x}
@@ -358,6 +364,7 @@ corollary1SubstLemma {x} {y} {σ} {M} {N} y#⇂σ,ƛxM
      ∼⟨ lemma-subst-σ∼ (prop8 y#⇂σ,ƛxM) ⟩
        M ∙ σ ≺+ (x , N)
      ∎
+     where open PreR ≈-preorder∼ 
 
 corollary4-2  : {x y : V}{M : Λ}{σ : Σ}
               → y #⇂ (σ , ƛ x M) 
@@ -377,7 +384,8 @@ corollary4-2 {x} {y} {M} {σ} y#⇂σ,ƛxM
            ∎)         ⟩
       ƛ y (M ∙ σ ≺+ (x , v y))
     ∎
-  where 
+  where
+  open PreR ≈-preorder∼ 
   z = χ (σ , ƛ x M)
   z#⇂σ,ƛxM : z #⇂ (σ , ƛ x M)
   z#⇂σ,ƛxM = χ-lemma2 σ (ƛ x M)
@@ -401,6 +409,7 @@ corollary4-2' {x} {y} {M} y#ƛxM
       ∼⟨ corollary4-2 (lemma#→ι#⇂ y#ƛxM)  ⟩
         ƛ y (M ∙ ι ≺+ (x , v y))
       ∎
+      where open PreR ≈-preorder∼ 
 
 lemmaƛ∼[] : {x : V}{M : Λ}{σ : Σ} → x #⇂ (σ , M) → σ x ≡ v x
   → ƛ x M ∙ σ ∼α  ƛ x (M ∙ σ)
@@ -423,6 +432,7 @@ lemmaƛ∼[] {x} {M} {σ} x#⇂σ,M σx≡x
        ƛ x (M ∙ σ)
      ∎
   where
+  open PreR ≈-preorder∼ 
   y = χ' (fv (ƛ x (M ∙ σ ≺+ (x , v x))) ++ fv (ƛ x (M ∙ σ)))
   y#ƛxM∙σ≺+x,x : y # ƛ x (M ∙ σ ≺+ (x , v x))
   y#ƛxM∙σ≺+x,x = lemma∉fv→# (c∉xs++ys→c∉xs  {y} {fv (ƛ x (M ∙ σ ≺+ (x , v x)))} 
