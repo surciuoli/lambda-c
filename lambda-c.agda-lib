@@ -1,0 +1,4 @@
+name: lambda-c
+depend: standard-library
+include: .
+
