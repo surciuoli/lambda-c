@@ -161,7 +161,7 @@ infix 2 _preserved-by_
 _preserved-by_ : Pred → Rel → Set 
 P preserved-by R = ∀ {M N} → P M → R M N → P N
 
-dual : Rel → Rel
+dual : ∀ {a} → {A : Set a} {ℓ : _} → RB.Rel A ℓ → RB.Rel A ℓ -- Rel → Rel
 dual R m n = R n m
 
 dual-#-* : {R : Rel}{y : V} → (_#_ y) preserved-by R → (_*_ y) preserved-by (dual R)
